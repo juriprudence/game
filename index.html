@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>My Catch Game</title>
+	<style>
+		canvas {
+			border: 1px solid black;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="gameCanvas" width="800" height="600"></canvas>
+	<div id="scoreDisplay"></div>
+	<script>
+		
+		const fallingObjectImage = new Image();
+fallingObjectImage.src = 'cat.png';
+
+const backgroundImage = new Image();
+backgroundImage.src = 'background.png';
+
+const playerImage = new Image();
+playerImage.src = 'player.png';
+
+const canvas = document.getElementById("gameCanvas");
+const context = canvas.getContext("2d");
+
+let playerX = 100;
+const playerY = 250;
+const playerWidth = 150;
+const playerHeight = 350;
+
+const fallingObjects = [];
+let score = 0;
+let misses = 0;
+
+function addFallingObject() {
+  const objectX = Math.random() * 750;
+  fallingObjects.push({
+    x: objectX,
+    y: -25,
+    width: 30,
+    height: 30,
+    image: fallingObjectImage
+  });
+}
+
+setInterval(addFallingObject, 1000);
+
+const keyboard = new Keyboard();
+keyboard.addKey(37);
+keyboard.addKey(39);
+
+let previousTimestamp = 0;
+
+function gameLoop(timestamp) {
+  const deltaTime = timestamp - previousTimestamp;
+  previousTimestamp = timestamp;
+
+  update(deltaTime);
+  render();
+
+  window.requestAnimationFrame(gameLoop);
+}
+window.requestAnimationFrame(gameLoop);
+
+function update(deltaTime) {
+  if (keyboard.isKeyDown(37)) {
+    playerX -= 5;
+  }
+  if (keyboard.isKeyDown(39)) {
+    playerX += 5;
+  }
+
+  canvas.addEventListener('click', function(event) {
+    if (event.offsetX < playerX) {
+      playerX -= 15;
+    } else if (event.offsetX > playerX + playerWidth) {
+      playerX += 15;
+    }
+  });
+
+  for (let i = 0; i < fallingObjects.length; i++) {
+    const object = fallingObjects[i];
+    object.y += 5;
+    if (object.y > 600) {
+      fallingObjects.splice(i, 1);
+      i--;
+      misses++;
+      if (misses >= 10) {
+        alert("Game over!");
+        location.reload();
+      }
+    } else if (object.x < playerX + playerWidth &&
+      object.x + object.width > playerX &&
+      object.y < playerY + playerHeight &&
+      object.y + object.height > playerY) {
+      fallingObjects.splice(i, 1);
+      i--;
+      score++;
+    }
+  }
+}
+
+function render() {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+  context.drawImage(playerImage, playerX, playerY, playerWidth, playerHeight);
+
+  for (const object of fallingObjects) {
+    context.drawImage(object.image, object.x, object.y, object.width, object.height);
+  }
+
+  context.fillStyle = "black";
+  context.font = "20px Arial";
+  context.fillText("Score: " + score, 10, 30);
+  context.fillText("Misses: " + misses, 10, 60);
+}
+
+function Keyboard() {
+  const self = this;
+  this.keys = {};
+
+  window.addEventListener("keydown", function(event) {
+    self.keys[event.keyCode] = true;
+  });
+
+  window.addEventListener("keyup", function(event) {
+    delete self.keys[event.keyCode];
+  });
+
+  this.isKeyDown = function(keyCode) {
+    return self.keys[keyCode] ? true : false;
+  };
+
+  this.addKey = function(keyCode) {
+    self.keys[keyCode] = false;
+  };
+}
+
+
+
+	</script>
+</body>
+</html>
+``
